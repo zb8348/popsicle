@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pfw.popsicle.front.dao.TransactionDao">
+
+	<resultMap type="com.pfw.popsicle.front.entity.Transaction" id="TransactMap">
+		<id column="id" property="id"/>
+		<result column="ticket" property="ticket"/>
+		<result column="currency" property="currency"/>
+		<result column="volume" property="volume"/>
+		<result column="lots" property="lots"/>
+		<result column="open_time" property="openTime"/>
+		<result column="close_time" property="closeTime"/>
+		<result column="open_type" property="openType"/>
+		<result column="close_type" property="closeType"/>
+		<result column="direction" property="direction"/>
+		<result column="open_position" property="openPosition"/>
+		<result column="close_position" property="closePosition"/>
+		<result column="net_p_l" property="netPL"/>
+		<result column="gross_p_l" property="grossPL"/>
+		<result column="group_id" property="groupId"/>
+		
+		<result column="status" property="status"/>
+	</resultMap>
+	
+	<!--  parameterType="com.pfw.popsicle.front.entity.Transaction" -->
+	<insert id="batchSave" parameterType="com.pfw.popsicle.front.entity.Transaction">  
+		<!--  useGeneratedKeys="true" keyProperty="id"  -->
+        insert into t_transaction (ticket,currency,volume,lots,open_time,close_time,open_type,close_type,direction,open_position,close_position,net_p_l,gross_p_l,group_id,status)  
+        VALUES  
+            <foreach collection="transactions" item="t" index="index" separator=",">  
+                (#{t.ticket},#{t.currency},#{t.volume},#{t.lots},#{t.openTime},#{t.closeTime},#{t.openType},#{t.closeType},#{t.direction},#{t.openPosition},#{t.closePosition},#{t.netPL},#{t.grossPL},#{t.groupId},#{t.status})  
+            </foreach>  
+    </insert> 
+    
+    <select id="findByGroupId" resultType="list" resultMap="TransactMap">
+		select * from t_transaction where group_id = #{groupId}
+		<if test="status!=null"> and status=${status}</if>
+	</select>
+	<select id="findByIds" resultType="list" resultMap="TransactMap">
+		select * from t_transaction where id in(
+		<foreach collection="ids" item="t" index="index" separator=",">  
+			#{t}
+        </foreach>  
+		)
+	</select>
+	
+	<delete id="deleteByGroupId" parameterType="long" >
+		delete from t_transaction where group_id = #{groupId}
+	</delete>
+	<delete id="deleteByIds">
+		delete from t_transaction where id in(
+		<foreach collection="ids" item="t" index="index" separator=",">  
+			#{t}
+        </foreach>  
+		)
+	</delete>
+    <update id="update">
+		update t_transaction
+		 <set>  
+	       <if test="t.ticket !=null and t.ticket !=''">ticket=#{t.ticket},</if>
+	       <if test="t.currency !=null and t.currency !=''">currency=#{t.currency},</if>
+	       <if test="t.volume !=null">volume=#{t.volume},</if>
+	       <if test="t.lots !=null">lots=#{t.lots},</if>
+	       <if test="t.openTime !=null">open_time=#{t.openTime},</if>
+	       <if test="t.closeTime !=null">close_time=#{t.closeTime},</if>
+	       <if test="t.openType !=null and t.openType !=''">open_type=#{t.openType},</if>
+	       <if test="t.closeType !=null and t.closeType !=''">close_type=#{t.closeType},</if>
+	       <if test="t.direction !=null and t.direction !=''">direction=#{t.direction},</if>
+	       <if test="t.openPosition !=null">open_position=#{t.openPosition},</if>
+	       <if test="t.closePosition !=null">close_position=#{t.closePosition},</if>
+	       <if test="t.netPL !=null">net_p_l=#{t.netPL},</if>
+	       <if test="t.grossPL !=null">gross_p_l=#{t.grossPL},</if>
+	       <if test="t.status !=null">status=#{t.status}</if>
+    	</set>  
+		where id = #{t.id}
+	</update>
+</mapper>
+
+

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pfw.popsicle.front.dao.KschemaDao">
+    
+    <resultMap type="com.pfw.popsicle.front.entity.Kschema" id="KSchemaMap">
+   	 	<result column="ticker" property="ticker"/>
+		<result column="time" property="time"/>
+		<result column="day_str" property="dayStr"/>
+		<result column="time_str" property="timeStr"/>
+		<result column="open" property="open"/>
+		<result column="close" property="close"/>
+		<result column="high" property="high"/>
+		<result column="low" property="low"/>
+		<result column="volume" property="volume"/>
+	</resultMap>
+	
+	
+	<insert id="batchSave" parameterType="com.pfw.popsicle.front.entity.Kschema">  
+        insert into t_kschema (ticker,time,day_str,time_str,open,close,high,low,volume)  
+        VALUES  
+            <foreach collection="prices" item="t" index="index" separator=",">  
+                (#{t.ticker},#{t.time},#{t.dayStr},#{t.timeStr},#{t.open},#{t.close},#{t.high},#{t.low},#{t.volume})  
+            </foreach>  
+    </insert> 
+    
+     
+   <!--  <select id="countByTime" resultType="list" resultMap="KSchemaMap">
+    	 <![CDATA[
+		select open_time, from t_transaction where group_id = #{groupId}
+		and open_time >= ${openTime} and close_time<=${closeTime}
+		group by   microsecond(close_time)-microsecond(open_time) between ${begin} on ${end}
+		]]>
+	</select> -->
+</mapper>
+
+

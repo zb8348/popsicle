@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pfw.popsicle.backend.dao.TransactGroupCrudDao">
+	
+	<resultMap type="com.pfw.popsicle.front.entity.TransactGroup" id="TransactGroupMap">
+		<id column="id" property="id"/>
+		<result column="creator" property="creator"/>
+		<result column="create_time" property="createTime"/>
+		<result column="name" property="name"/>
+		<result column="file_name" property="fileName"/>
+		<result column="broker" property="broker"/>
+		<result column="type" property="type"/>
+		<result column="account_name" property="accountName"/>
+		<result column="address" property="address"/>
+		<result column="analysis_amount" property="analysisAmount"/>
+		<result column="analysis_p_l" property="analysisPl"/>
+		
+		<result column="parent_id" property="parentId"/>
+		<result column="user_id" property="userId"/>
+	</resultMap>
+
+	<!-- 自动生成id策略 -->
+	<insert id="save" parameterType="com.pfw.popsicle.front.entity.TransactGroup"  useGeneratedKeys="true" keyProperty="id">
+		insert into t_transact_group(creator, create_time,name,file_name,broker,type,account_name,address,analysis_amount,analysis_p_l,user_id,parent_id) 
+		values(#{creator},#{createTime},#{name},#{fileName},#{broker},#{type},#{accountName},#{address},#{analysisAmount},#{analysisPl},#{userId},#{parentId})
+		<!-- <selectKey  resultType="long" keyProperty="id">  
+	        select last_insert_id() as ID from t_transact_group limit 1  
+	    </selectKey> -->
+	</insert>
+
+	<select id="getById" parameterType="long" resultMap="TransactGroupMap">
+		select * from t_transact_group where id = #{id}
+	</select>
+
+	<delete id="delete">
+		delete from t_transact_group where id=#{id}
+	</delete>
+
+	<update id="update">
+		update t_transact_group
+		 <set>  
+	       <if test="tg.name !=null and tg.name !=''">name=#{tg.name},</if>
+	       <if test="tg.fileName !=null and tg.fileName !=''">file_name=#{tg.fileName},</if>
+	       <if test="tg.broker !=null and tg.broker !=''">broker=#{tg.broker},</if>
+	       <if test="tg.type !=null and tg.type !=''">type=#{tg.type},</if>
+	       <if test="tg.accountName !=null and tg.accountName !=''">account_name=#{tg.accountName},</if>
+	       <if test="tg.address !=null and tg.address !=''">address=#{tg.address},</if>
+	       <if test="tg.analysisAmount !=null">analysis_amount=#{tg.analysisAmount},</if>
+	       <if test="tg.analysisPl !=null">analysis_p_l=#{tg.analysisPl},</if>
+	       <if test="tg.parentId !=null">parent_id=#{tg.parentId}</if>
+    	</set>  
+		where id = #{tg.id}
+	</update>
+	
+	<sql id="findPageSQL">
+		<where>
+			<if test="e.name !=null and e.name !=''">
+				name Like concat('%', #{e.name}, '%')
+			</if>
+			<if test="e.creator !=null and e.creator !=''">
+				and creator Like concat('%', #{e.creator}, '%')
+			</if>
+			<if test="e.broker !=null and e.broker !=''">
+				and broker Like concat('%', #{e.broker}, '%')
+			</if>
+			<if test="e.type !=null and e.type !=''">
+				and type Like concat('%', #{e.type}, '%')
+			</if>
+			<if test="e.accountName !=null and e.accountName !=''">
+				and account_name Like concat('%', #{e.accountName}, '%')
+			</if>
+			<if test="e.address !=null and e.address !=''">
+				and address Like concat('%', #{e.address}, '%')
+			</if>
+		</where>
+	</sql>
+	<select id="findPage" resultMap="TransactGroupMap">
+		select * from t_transact_group t
+		<if test="e!=null">
+			<include refid="findPageSQL" />
+		</if>
+		<if test="orderName !=null and orderName !=''">
+			order by ${orderName} ${orderType}
+		</if>
+		limit #{start} ,#{pagesize}
+	</select>
+	<select id="findPageSize" resultType="long">
+		select count(1) from t_transact_group t
+		<if test="e!=null">
+			<include refid="findPageSQL" />
+		</if>
+	</select>
+	
+</mapper>
+
+

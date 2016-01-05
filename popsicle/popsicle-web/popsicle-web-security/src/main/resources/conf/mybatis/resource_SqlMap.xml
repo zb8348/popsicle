@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pfw.popsicle.security.dao.ResourceDao">
+	<resultMap type="com.pfw.popsicle.security.entity.Resource"
+		id="ResourceMap">
+		<id property="id" column="id" />
+		<result property="createTime" column="create_time" />
+		<result property="creator" column="creator" />
+		<result property="modifiedTime" column="modified_time" />
+		<result property="modifier" column="modifier" />
+		<result property="valid" column="valid" />
+		<result property="name" column="name" />
+		<result property="code" column="code" />
+		<result property="url" column="url" />
+		<result property="authUrl" column="auth_url" />
+		<result property="hasAnyRoles" column="has_any_roles" />
+		<result property="orderNo" column="order_no" />
+		<result property="type" column="type" />
+		<result property="parentCode" column="parent_code" />
+	</resultMap>
+	<select id="findAllWithOrderNo" resultMap="ResourceMap">
+		select * from
+		t_resource t where t.valid=1 order by parent_code,order_no
+	</select>
+	<select id="findRoleResourceWithOrderNo" parameterType="java.lang.Long"
+		resultMap="ResourceMap">
+		SELECT t.* FROM t_resource t , ref_role_resource t1 WHERE
+		t.id = t1.resource_id AND t1.role_id = #{id}
+	</select>
+	<insert id="save" parameterType="com.pfw.popsicle.security.entity.Resource" useGeneratedKeys="true" keyProperty="id">
+		<![CDATA[
+		  insert into t_resource(
+		  		valid,
+		  		name,
+		  		code,
+		  		url,
+		  		auth_url,
+		  		has_any_roles,
+		  		order_no,
+		  		type,
+		  		parent_code,
+		  		create_time,
+		  		creator)
+		  values(
+		  		#{valid},
+		  		#{name},
+		  		#{code},
+		  		#{url},
+		  		#{authUrl},
+		  		#{hasAnyRoles},
+		  		#{orderNo},
+		  		#{type},
+		  		#{parentCode},
+		  		#{createTime},
+		  		#{creator})
+		]]>
+	</insert>
+	<update id="update" parameterType="com.pfw.popsicle.security.entity.Resource">
+		update t_resource set
+		name = #{name},
+		code = #{code},
+		url = #{url},
+		auth_url = #{authUrl},
+		has_any_roles = #{hasAnyRoles},
+		order_no = #{orderNo},
+		type = #{type},
+		parent_code = #{parentCode},
+		modified_time = #{modifiedTime},
+		modifier =
+		#{modifier}
+		where id = #{id}
+	</update>
+	<select id="selectResourceByCode" parameterType="String"
+		resultMap="ResourceMap">
+		select * from t_resource t where t.code=#{code}
+	</select>
+	<update id="updateSelfSunParentCode">
+		UPDATE
+		t_resource SET parent_code = #{parentCode}
+		where parent_code =#{code}
+	</update>
+	<delete id="deleteByCode" parameterType="java.lang.String">
+		delete from t_resource
+		where code=#{code}
+	</delete>
+	<select id="findResourcesByRoleId" parameterType="long"
+		resultMap="ResourceMap">
+		select t.* from t_resource t
+		left join ref_role_resource trr
+		on t.id=trr.resource_id
+		where t.valid=1 and
+		trr.role_id=#{roleId}
+	</select>
+	<select id="findAllRoleNamesByResourceId" parameterType="java.lang.Long"
+		resultType="java.lang.String">
+		SELECT r.name FROM t_role r
+		left join ref_role_resource rr
+		on r.id=rr.role_id
+		WHERE rr.resource_id =
+		#{id}
+	</select>
+	<update id="updateHasAnyRoleName">
+		update
+		t_resource set has_any_roles = #{names}
+		WHERE id =#{id}
+	</update>
+</mapper>
+

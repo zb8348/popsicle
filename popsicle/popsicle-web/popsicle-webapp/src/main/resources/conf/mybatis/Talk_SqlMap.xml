@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pfw.popsicle.social.dao.TalkDao">
+	
+    <resultMap type="com.pfw.popsicle.social.entity.Talk" id="TalkMap">
+    	<id column="id" property="id"/>
+   	 	<result column="object_id" property="objectId"/>
+		<result column="talker_id" property="talkerId"/>
+		<result column="talker" property="talker"/>
+		<result column="create_time" property="createTime"/>
+		<result column="target_id" property="targetId"/>
+		<result column="target_str" property="targetStr"/>
+		<result column="content" property="content"/>
+		<result column="long_content" property="longContent"/>
+		<result column="long_content_key" property="longContentKey"/>
+	</resultMap>
+	
+	<select id="findByCreateTimeDesc" resultType="list" resultMap="TalkMap">
+		select * from t_talk
+		where object_id=#{objectId}
+		<if test="lastId!=null"> and id>#{lastId}</if>
+		order by create_time desc
+		limit 0,10
+	</select>
+	<select id="findByCreateTimeDescBeforeId" resultType="list" resultMap="TalkMap">
+		select * from t_talk
+		where object_id=#{objectId}
+		<if test="lastId!=null">
+		 <![CDATA[ and id<#{lastId} ]]>
+		 </if>
+		order by create_time desc
+		limit 0,10
+	</select>
+	
+	
+		<!-- 自动生成id策略 -->
+	<insert id="save" parameterType="com.pfw.popsicle.social.entity.Talk"  useGeneratedKeys="true" keyProperty="id">
+		insert into t_talk(object_id, talker_id,talker,create_time,target_id,target_str,content,long_content,long_content_key) 
+		values(#{objectId},#{talkerId},#{talker},#{createTime},#{targetId},#{targetStr},#{content},#{longContent},#{longContentKey})
+		<!-- <selectKey  resultType="long" keyProperty="id">  
+	        select last_insert_id() as ID from t_talk limit 1  
+	    </selectKey> -->
+	</insert>
+	
+     
+</mapper>
+
+

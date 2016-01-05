@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:jdbc="http://www.springframework.org/schema/jdbc"  
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	 xmlns:util="http://www.springframework.org/schema/util"  
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+	
+	
+		
+	<!-- <mvc:default-servlet-handler /> -->
+	<!-- <mvc:resources mapping="*.jsp" location="/" /> -->
+	<!-- 不进行拦截的 -->  
+	<mvc:resources mapping="/statics/**" location="/statics/" />
+	
+	
+	
+	<mvc:view-controller path="/" view-name="login" />
+	<!-- <mvc:resources mapping="/statics/**" location="/statics/" />
+	<mvc:resources mapping="/common/**" location="/common/" />
+	<mvc:resources mapping="/error/**" location="/error/" />
+	<mvc:resources mapping="*.html" location="/" />
+	<mvc:resources mapping="*.htm" location="/" /> -->
+	<!-- <mvc:default-servlet-handler/> -->
+	
+	
+<mvc:annotation-driven>
+	<mvc:message-converters>
+		<ref bean="stringHttpMessageConverter" />  
+            <ref bean="fastJsonHttpMessageConverter" />  
+            
+	</mvc:message-converters>
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<mvc:argument-resolvers>
+		<bean class="org.springframework.mobile.device.DeviceWebArgumentResolver" />
+		<bean
+			class="org.springframework.mobile.device.site.SitePreferenceWebArgumentResolver" />
+	</mvc:argument-resolvers>
+</mvc:annotation-driven>
+	
+	
+	
+	
+	 <bean id="stringHttpMessageConverter"  
+        class="org.springframework.http.converter.StringHttpMessageConverter">  
+        <constructor-arg value="UTF-8" index="0"></constructor-arg><!--  
+            避免出现乱码 -->  
+        <property name="supportedMediaTypes">  
+            <list>  
+                <value>text/plain;charset=UTF-8</value>  
+            </list>  
+        </property>  
+    </bean>  
+    <bean id="fastJsonHttpMessageConverter"  
+        class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">  
+  
+        <property name="supportedMediaTypes">  
+            <list>  
+                <value>application/json;charset=UTF-8</value>  
+                <value>text/html;charset=UTF-8</value><!-- 避免IE出现下载JSON文件的情况 -->  
+            </list>  
+        </property>  
+        <property name="features">  
+            <util:list>  
+                <!-- <value>WriteMapNullValue</value> -->  
+                <value>QuoteFieldNames</value>  
+                
+				<!-- 输出空置字段 -->
+				<value>WriteMapNullValue</value>
+				<!-- 浏览器和设备兼容 -->
+				<value>BrowserCompatible</value>
+				<!-- list字段如果为null，输出为[]，而不是null -->
+				<value>WriteNullListAsEmpty</value>
+				<!-- 字符类型字段如果为null，输出为""，而不是null -->
+				<value>WriteNullStringAsEmpty</value>
+				<!-- 日期格式化 -->
+				<value>WriteDateUseDateFormat</value>
+				<value>WriteEnumUsingToString</value>
+            </util:list>  
+        </property>  
+    </bean>  
+      
+    <!-- 返回类型定义 -->  
+    <util:list id="messageConverters">  
+        <ref bean="stringHttpMessageConverter" />  
+        <ref bean="fastJsonHttpMessageConverter" />  
+    </util:list>  
+    <!-- restTemplate -->  
+    <bean id="restTemplate" class="org.springframework.web.client.RestTemplate">  
+        <property name="messageConverters" ref="messageConverters">  
+        </property>  
+    </bean>  
+    
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<bean class="com.pfw.popsicle.web.core.interceptors.SysDataInterceptor">
+				<property name="resourceService" ref="resourceService"></property>
+			</bean>
+		</mvc:interceptor>
+		 <!-- On pre-handle, resolve the device that originated the web request -->  
+		<bean class="org.springframework.mobile.device.DeviceResolverHandlerInterceptor" ></bean>
+		 <!-- On pre-handle, manage the user's site preference (declare after DeviceResolverHandlerInterceptor) -->  
+		<bean class="org.springframework.mobile.device.site.SitePreferenceHandlerInterceptor" ></bean>
+	</mvc:interceptors>
+	
+
+
+    <!-- Resolves views selected for rendering by @Controllers   -->  
+    <bean class="org.springframework.mobile.device.view.LiteDeviceDelegatingViewResolver">  
+        <constructor-arg>  
+            <bean id="freemarkerViewResolver"
+				class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+				<property name="viewClass"
+					value="com.pfw.popsicle.web.core.view.freemarker.PFWFreeMarkerView" />
+				<property name="requestContextAttribute" value="request" />
+				<property name="exposeRequestAttributes" value="true" />
+				<property name="exposeSessionAttributes" value="true" />
+				<property name="exposeSpringMacroHelpers" value="true" />
+		
+				<property name="cache" value="true" />
+				<property name="prefix" value="ftl/" />
+				<property name="suffix" value=".ftl" />
+				<property name="contentType" value="text/html;charset=UTF-8" />
+			</bean>
+        </constructor-arg>  
+        <property name="enableFallback" value="true" />  
+        <property name="mobilePrefix" value="mobile/" />  
+        <property name="tabletPrefix" value="tablet/" />  
+    </bean>  
+    
+
+
+	<bean id="freemarkerConfiguration" class="org.springframework.beans.factory.config.PropertiesFactoryBean">  
+	 	<property name="location" value="classpath:freemarker.properties"/>  
+	</bean>
+	<bean id="freemarkerConfigurer"
+		class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+		<property name="freemarkerVariables">
+			<map>
+				<!-- <entry key="base" value="${ctx}" />-->
+				<!-- 
+				<entry key="statics" value="${urlPrefix.statics}" />
+				<entry key="version" value="${urlPrefix.version}" />
+				<entry key="runtime" value="${runtime}" /> 
+				-->
+			</map>
+		</property> 
+		<!-- 
+		<property name="templateLoaderPaths">
+			<list>
+				<value>/ftl/</value>
+				<value>/WEB-INF/lib/popsicle-web*</value>
+			</list>
+		</property>
+		-->
+		<property name="defaultEncoding" value="utf-8" />
+		<property name="freemarkerSettings" ref="freemarkerConfiguration"/>
+	</bean>
+	
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>messages</value>
+				<value>classpath:org/springframework/security/messages_zh_CN</value>
+			</list>
+		</property>
+	</bean>
+	
+	
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="10000000" />
+		<property name="defaultEncoding" value="utf-8" />
+	</bean>
+	
+	<bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">  
+		<!--  定义默认的异常处理页面 
+    	<property name="defaultErrorView" value="error/error"/>  
+    	定义异常处理页面用来获取异常信息的变量名，如果不添加exceptionAttribute属性，则默认为exception  
+    	<property name="exceptionAttribute" value="exception"/>   -->
+		<property name="exceptionMappings">  
+			<props>  
+				<prop key="java.lang.Exception">error/error</prop>
+				<prop key="java.lang.Throwable">error/error</prop>
+				<prop key="org.springframework.validation.BindException">error/error</prop>
+				<prop key="org.apache.shiro.authz.UnauthorizedException">error/403.jsp</prop>        
+            </props>  
+		</property>  
+    </bean> 
+</beans>

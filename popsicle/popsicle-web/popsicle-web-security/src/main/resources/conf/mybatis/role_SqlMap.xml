@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pfw.popsicle.security.dao.RoleDao">
+	<resultMap type="com.pfw.popsicle.security.entity.Role" id="RoleMap">
+		<id property="id" column="id" />
+		<result property="createTime" column="create_time" />
+		<result property="creator" column="creator" />
+		<result property="modifiedTime" column="modified_time" />
+		<result property="modifier" column="modifier" />
+		<result property="valid" column="valid" />
+		<result property="name" column="name" />
+		<result property="code" column="code" />
+		<result property="remark" column="remark" />
+	</resultMap>
+
+	<resultMap type="com.pfw.popsicle.security.vo.RoleAndResourcesVO"
+		id="RoleResourcesMap">
+		<result property="roleId" column="role_id" />
+		<result property="resourceId" column="resource_id" />
+		<result property="resourceName" column="name" />
+		<result property="resourceType" column="type" />
+		<result property="url" column="url" />
+	</resultMap>
+	<resultMap type="com.pfw.popsicle.security.entity.RoleResource"
+		id="RoleResourceVOMap">
+		<result property="roleId" column="role_id" />
+		<result property="resourceId" column="resource_id" />
+	</resultMap>
+
+	<select id="loadAll" resultType="list" resultMap="RoleMap">
+        <![CDATA[
+            select * from t_role
+        ]]>
+	</select>
+
+	<select id="findRolesByUserId" parameterType="long" resultType="list"
+		resultMap="RoleMap">
+        <![CDATA[
+            select * from t_role where id in (select role_id from ref_user_role where user_id=#{userId})
+        ]]>
+	</select>
+	<select id="getRoleByCode" resultMap="RoleMap" parameterType="string">
+        <![CDATA[
+            select * from t_role where code = #{code}
+        ]]>
+	</select>
+	
+	<select id="findById" parameterType="long"
+		resultMap="RoleMap">
+        <![CDATA[
+            select * from t_role where id =#{id}
+        ]]>
+	</select>
+	
+
+	<!-- 自动生成id策略 -->
+	<insert id="save" parameterType="com.pfw.popsicle.security.entity.Role"
+		useGeneratedKeys="true" keyProperty="id">
+		<!-- <selectKey resultType="long" keyProperty="id"> select last_insert_id() 
+			as ID from t_role limit 1 </selectKey> -->
+		insert into t_role (create_time, creator, modified_time, modifier,
+		valid, name, code, remark)
+		values(#{createTime},#{creator},#{modifiedTime},#{modifier},#{valid},#{name},#{code},#{remark})
+	</insert>
+	<!-- 自动生成id策略 -->
+	<insert id="addRoleToUser">
+		insert into ref_user_role(role_id,user_id)
+		values(#{roleId},#{userId})
+	</insert>
+
+
+
+
+	<sql id="findPageSQL">
+		where t.valid=1
+		<if test="role.name!=null and role.name!=''">and name like concat('%', #{role.name}, '%') </if>
+		<if test="role.code !=null and role.code !=''">and code like concat('%', #{role.code}, '%') </if>
+		<if test="role.remark !=null and role.remark !=''">and remark like concat('%', #{role.remark}, '%') </if>
+	</sql>
+	<select id="findPage"
+		resultMap="RoleMap">
+		select * from t_role t
+		<if test="role!=null">
+			<include refid="findPageSQL" />
+		</if>
+		limit #{start},#{pageSize}
+	</select>
+	<select id="findPageSize"
+		resultType="long">
+		select count(1) from t_role t
+		<if test="role!=null">
+		<include refid="findPageSQL" />
+		</if>
+	</select>
+
+	<update id="update" parameterType="com.pfw.popsicle.security.entity.Role">
+		update t_role set
+		modified_time =
+		#{modifiedTime},modifier=#{modifier},valid=#{valid},name=#{name},code=#{code},remark=#{remark}
+		where id=#{id}
+	</update>
+
+	<select id="findUserRoleById" parameterType="long" resultType="long">
+		SELECT count(1) FROM ref_user_role WHERE role_id = #{id}
+	</select>
+
+	<delete id="delete" parameterType="long">
+		delete from t_role
+		where id = #{id}
+	</delete>
+	<delete id="deleteRoleResourceByRoleId" parameterType="long">
+		delete from ref_role_resource where role_id = #{roleId}
+	</delete>
+	<delete id="deleteRoleResource" parameterType="com.pfw.popsicle.security.vo.RoleAndResourcesVO">
+		DELETE
+		FROM ref_resource
+		WHERE id =#{roleId} and
+		resource_id in
+		<foreach separator="," open="(" close=")" collection="roleResourceIds"
+			item="rr">
+			#{rr}
+		</foreach>
+	</delete>
+
+	<select id="findRoleResourcesById" parameterType="long"
+		resultMap="RoleResourcesMap">
+		SELECT t.id resource_id,t.name NAME,t.type type,t.url
+		url,r.role_id role_id
+		FROM t_resource t LEFT JOIN ref_role_resource r
+		ON t.id=r.resource_id AND r.role_id=#{id}
+	</select>
+
+
+	<select id="findPageExitUserRole" parameterType="com.pfw.popsicle.security.entity.Role"
+		resultMap="RoleMap">
+		select * from t_role t where t.valid=1 and t.id not in
+		(select role_id from ref_user_role where user_id = #{role.id})
+		limit #{start},#{pageSize}
+	</select>
+
+	<select id="findPageExitUserRoleSize" parameterType="com.pfw.popsicle.security.entity.Role"
+		resultType="long">
+		select count(1) from t_role t where t.valid = 1 and t.id
+		not in (select id from ref_user_role where user_id = #{role.id})
+	</select>
+
+	<update id="updateResourceDelHasAnyRole" parameterType="java.util.Map">
+		UPDATE
+		t_resource t
+		SET t.has_any_roles = case
+		when has_any_roles is null then
+		''
+		else REPLACE(has_any_roles , #{roleName},'')
+		END
+		WHERE t.id IN (SELECT
+		t1.resource_id FROM ref_role_resource t1 WHERE t1.role_id = #{roleId})
+	</update>
+	<update id="updateResourceAddHasAnyRole" parameterType="java.util.Map">
+		UPDATE
+		t_resource t
+		SET t.has_any_roles = case
+		when has_any_roles is null then
+		concat('',#{roleName})
+		else CONCAT(has_any_roles , #{roleName})
+		END
+		WHERE t.id IN (SELECT t1.resource_id FROM ref_role_resource t1 WHERE
+		t1.role_id = #{roleId})
+	</update>
+	<select id="findByCode" parameterType="java.lang.String"
+		resultMap="RoleMap">
+		select * from t_role where code = #{code}
+	</select>
+	<select id="findRoleResourceByRoleId" parameterType="long"
+		resultMap="RoleResourceVOMap">
+		select role_id,resource_id from ref_role_resource where
+		role_id = #{roleId}
+	</select>
+	<delete id="deleteRoleResourceById" parameterType="long">
+		delete
+		from ref_role_resource where role_id = #{id}
+	</delete>
+
+
+	<insert id="saveOrUpdateRoleResource" parameterType="com.pfw.popsicle.security.entity.RoleResource">
+		insert into
+		ref_role_resource (role_id, resource_id)
+		values
+		<foreach collection="rrList" item="rr" index="index" separator=",">
+			(#{rr.roleId},#{rr.resourceId})
+		</foreach>
+	</insert>
+</mapper>
+
+
